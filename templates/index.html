@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AP College Predictor</title>
+    <style>
+    body {
+      font-family: Poppins, sans-serif;
+      background: #f4f6f8;
+      padding: 2rem;
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+    form {
+      max-width: 500px;
+      margin: auto;
+      background: white;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    label {
+      display: block;
+      margin-top: 1rem;
+      font-weight: 600;
+    }
+    input, select {
+      width: 100%;
+      padding: 0.6rem;
+      margin-top: 0.5rem;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+    button {
+      width: 100%;
+      margin-top: 1.5rem;
+      padding: 0.8rem;
+      background-color: #6c5ce7;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #5a4cd1;
+    }
+    .results {
+      max-width: 700px;
+      margin: 2rem auto;
+      background: white;
+      padding: 1rem;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    td {
+        vertical-align: top;
+        padding-bottom: 0.5rem;
+    }
+
+    table label {
+        font-weight: 600;
+        display: inline-block;
+        margin-top: 0.2rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>College Predictor (AP EAPCET)</h1>
+
+  <form id="predictorForm">
+    <label for="rank">Enter Your Rank</label>
+    <input type="number" id="rank" required>
+
+    <label for="category">Select Category</label>
+    <select id="category" required>
+      <option value="OC">OC</option>
+      <option value="BCB">BC-B</option>
+      <option value="BCC">BC-C</option>
+      <option value="BCD">BC-D</option>
+      <option value="BCE">BC-E</option>
+      <option value="SC">SC</option>
+      <option value="ST">ST</option>
+      <option value="OC_EWS">OC - EWS</option>
+    </select>
+
+    <label for="gender">Select Gender</label>
+    <select id="gender" required>
+      <option value="BOYS">Boys</option>
+      <option value="GIRLS">Girls</option>
+    </select>
+
+    <label for="branch">Branch (Optional)</label>
+    <input type="text" id="branch" placeholder="e.g., CSE, ECE">
+
+    <label for="instcode">College Code (Optional)</label>
+    <input type="text" id="instcode" placeholder="e.g., ACEE">
+
+    <label for="district">District In Code (Optional)</label>
+    <input type="text" id="district" placeholder="e.g., EG, WG, VSP">
+
+    <button type="submit">Check Eligibility</button>
+  </form>
+
+  <div class="results" id="results" style="display: none;">
+    <h3>Eligible Colleges:</h3>
+    <div id="resultContent">[Results will appear here after backend integration]</div>
+  </div>
+  <script>
+      document.getElementById('predictorForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      const rank = parseInt(document.getElementById('rank').value);
+      const category = document.getElementById('category').value;
+      const gender = document.getElementById('gender').value;
+      const branch = document.getElementById('branch').value.trim().toUpperCase();
+      const instcode = document.getElementById('instcode').value.trim().toUpperCase();
+      const district = document.getElementById('district').value.trim().toUpperCase();
+
+      const formData = new FormData();
+      formData.append('rank', rank);
+      formData.append('category', category);
+      formData.append('gender', gender);
+      formData.append('branch', branch);
+      formData.append('instcode', instcode);
+      formData.append('district', district);
+
+      const response = await fetch('/predict', {
+        method: 'POST',
+        body: formData
+      });
+
+      const result = await response.json();
+
+      const resultContent = document.getElementById('resultContent');
+      const resultsDiv = document.getElementById('results');
+      resultsDiv.style.display = 'block';
+
+      if (result.error) {
+        resultContent.innerHTML = `<p style="color:red;">${result.error}</p>`;
+        return;
+      }
+
+      if (result.length === 0) {
+        resultContent.innerHTML = `<p>No colleges found for your rank.</p>`;
+      } else {
+        resultContent.innerHTML = `
+          <table border="1" style="width:100%; border-collapse: collapse;">
+              <thead style="background:#f0f0f0;">
+              <tr>
+                  <th>Institution</th>
+                  <th>Branch</th>
+                  <th>Place</th>
+                  <th>District</th>
+                  <th>Cutoff Rank</th>
+              </tr>
+              </thead>
+              <tbody>
+              ${result.map(college => `
+                  <tr>
+                  <td>${college["NAME OF THE INSTITUTION"]}</td>
+                  <td>${college["branch_code"]}</td>
+                  <td>${college["PLACE"]}</td>
+                  <td>${college["DIST"]}</td>
+                  <td>${college["Cutoff Rank"]}</td>
+                  </tr>
+              `).join('')}
+              </tbody>
+          </table>
+        `;
+      }
+    });
+
+  </script>
+
+</body>
+</html>
